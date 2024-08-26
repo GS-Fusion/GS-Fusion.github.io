@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="GSFusion: Online RGB-D Mapping Where Gaussian Splatting Meets TSDF Fusion">
+  <meta name="keywords" content="Online RGB-D mapping, Gaussian splatting, TSDF fusion">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GSFusion: Online RGB-D Mapping Where Gaussian Splatting Meets TSDF Fusion</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/script.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+</head>
+<body>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-widescreen">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">GSFusion: Online RGB-D Mapping Where Gaussian Splatting Meets TSDF Fusion</h1>
+          <div class="is-size-5 publication-authors">
+              <p>Jiaxin Wei and Stefan Leutenegger</p>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">Smart Robotics Lab, Technical University of Munich</span>
+          </div>         
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href=""
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                    <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span>                            
+              <span class="link-block">
+                <a href=""
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/goldoak/GSFusion"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-widescreen">
+    <div class="hero-body">
+        <div class="container is-max-widescreen">
+        <div class="columns is-centered">
+     
+        <div class="column has-text-centered">
+          <div class="content">
+            <video id="s1_recon" autoplay controls muted loop playsinline height="100%">
+              <source src="./static/videos/UI_room0_clip.mp4"
+                      type="video/mp4">
+            </video>
+          </div>
+        </div>
+      
+        <div class="column has-text-centered">
+          <div class="content">
+            <video id="s1_nvs" autoplay controls muted loop playsinline height="100%">
+              <source src="./static/videos/UI_8b_clip.mp4"
+                      type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        <div class="column has-text-centered">
+          <div class="content">
+            <video id="s1_nvs" autoplay controls muted loop playsinline height="100%">
+              <source src="./static/videos/UI_drone_clip.mp4"
+                      type="video/mp4">
+            </video>
+          </div>
+        </div>
+
+        </div>
+        </div>
+      <h2 class="subtitle has-text-centered">
+        <span>We present three demos on Replica, ScanNet++, and self-collected drone data, all running on a single Nvidia RTX 3060 GPU, with no video speedup.</span>
+      </h2>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-widescreen">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Traditional volumetric fusion algorithms preserve the spatial structure of 3D scenes, which is beneficial for many tasks in computer vision and robotics. However, they often lack realism in terms of visualization. Emerging 3D Gaussian splatting bridges this gap, but existing Gaussian-based reconstruction methods often suffer from artifacts and inconsistencies with the underlying 3D structure, and struggle with real-time optimization, unable to provide users with immediate feedback in high quality. One of the bottlenecks arises from the massive amount of Gaussian parameters that need to be updated during optimization. Instead of using 3D Gaussian as a standalone map representation, we incorporate it into a volumetric mapping system to take advantage of geometric information and propose to use a quadtree data structure on images to drastically reduce the number of splats initialized. In this way, we simultaneously generate a compact 3D Gaussian map with fewer artifacts and a volumetric map on the fly. Our method, GSFusion, significantly enhances computational efficiency without sacrificing rendering quality, as demonstrated on both synthetic and real datasets.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section m-0 p-0">
+  <div class="container is-max-widescreen">
+    <div class="columns is-centered has-text-centered">
+      <div class="column">
+        <h2 class="title is-3">Method Overview</h2>
+    
+        <div class="column pt-0">
+          <figure class="image is-full-width">
+            <img src="./static/images/pipeline.png"/>
+          </figure>
+        </div>
+        <div class="content has-text-justified">
+          <p>
+            At each time step, our GSFusion takes a pair of RGB-D images as input. The depth data is fused into an octree-based TSDF grid to capture geometric structure while the RGB image is segmented using quadtree based on contrast. A new 3D Gaussian is then initialized at the back-projected center of a quadrant if there are no adjacent Gaussians by checking its nearest voxel. We optimize Gaussian parameters on the fly by minimizing the photometric loss between the rendered image and input RGB. Additionally, we maintain a keyframe set to deal with the forgetting problem. After scanning, the system provides both a volumetric map and a 3D Gaussian map for subsequent tasks.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-widescreen content">
+    <div class="has-text-centered">
+      <h2 class="title is-3">Rendering Results</h2>
+      <div class="content has-text-justified">
+        <p>
+          We compare our method with SplaTAM and RTG-SLAM, and we show rendered images from both training view and novel view on ScanNet++ dataset.
+        </p>
+      </div>
+
+      <!-- Row 1 -->
+      <h3 class="title is-4">Training View</h3>
+      <div class="columns is-centered">
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 1 -->
+          <div id="example1" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/8b_ours_train.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/8b_splatam_train.png" alt="SplaTAM">
+                <div class="bal-beforePosition beforeLabel">SplaTAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 2 -->
+          <div id="example2" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/39_33_ours_train.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/39_33_splatam_train.png" alt="SplaTAM">
+                <div class="bal-beforePosition beforeLabel">SplaTAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 3 -->
+          <div id="example3" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/b2_299_ours_train.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/b2_299_splatam_train.png" alt="SplaTAM">
+                <div class="bal-beforePosition beforeLabel">SplaTAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 4 -->
+          <div id="example4" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/f3_90_ours_train.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/f3_90_splatam_train.png" alt="SplaTAM">
+                <div class="bal-beforePosition beforeLabel">SplaTAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Row 2 -->
+      <div class="columns is-centered">
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 5 -->
+          <div id="example5" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/8b_ours_train.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/8b_rtg_train.png" alt="RTG-SLAM">
+                <div class="bal-beforePosition beforeLabel">RTG-SLAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 6 -->
+          <div id="example6" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/39_33_ours_train.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/39_33_rtg_train.png" alt="RTG-SLAM">
+                <div class="bal-beforePosition beforeLabel">RTG-SLAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 7 -->
+          <div id="example7" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/b2_299_ours_train.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/b2_299_rtg_train.png" alt="RTG-SLAM">
+                <div class="bal-beforePosition beforeLabel">RTG-SLAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 8 -->
+          <div id="example8" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/f3_90_ours_train.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/f3_90_rtg_train.png" alt="RTG-SLAM">
+                <div class="bal-beforePosition beforeLabel">RTG-SLAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Row 3 -->
+      <h3 class="title is-4">Novel View</h3>
+      <div class="columns is-centered">
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 9 -->
+          <div id="example9" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/8b_13_ours_test.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/8b_13_splatam_test.png" alt="SplaTAM">
+                <div class="bal-beforePosition beforeLabel">SplaTAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 10 -->
+          <div id="example10" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/39_9_ours_test.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/39_9_splatam_test.png" alt="SplaTAM">
+                <div class="bal-beforePosition beforeLabel">SplaTAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 11 -->
+          <div id="example11" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/b2_0_ours_test.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/b2_0_splatam_test.png" alt="SplaTAM">
+                <div class="bal-beforePosition beforeLabel">SplaTAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 12 -->
+          <div id="example12" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/f3_11_ours_test.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/f3_11_splatam_test.png" alt="SplaTAM">
+                <div class="bal-beforePosition beforeLabel">SplaTAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Row 4 -->
+      <div class="columns is-centered">
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 13 -->
+          <div id="example13" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/8b_13_ours_test.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/8b_13_rtg_test.png" alt="RTG-SLAM">
+                <div class="bal-beforePosition beforeLabel">RTG-SLAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 14 -->
+          <div id="example14" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/39_9_ours_test.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/39_9_rtg_test.png" alt="RTG-SLAM">
+                <div class="bal-beforePosition beforeLabel">RTG-SLAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 15 -->
+          <div id="example15" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/b2_0_ours_test.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/b2_0_rtg_test.png" alt="RTG-SLAM">
+                <div class="bal-beforePosition beforeLabel">RTG-SLAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="column is-one-quarter">
+          <!-- Gallery Item 16 -->
+          <div id="example16" class="bal-container-small">
+            <div class="bal-after">
+              <img src="./static/images/f3_11_ours_test.png" alt="Ours">
+              <div class="bal-afterPosition afterLabel">Ours</div>
+            </div>
+            <div class="bal-before" style="width:50%;">
+              <div class="bal-before-inset">
+                <img src="./static/images/f3_11_rtg_test.png" alt="RTG-SLAM">
+                <div class="bal-beforePosition beforeLabel">RTG-SLAM</div>
+              </div>
+            </div>
+            <div class="bal-handle" style="left:50%;">
+              <span class="handle-left-arrow"></span>
+              <span class="handle-right-arrow"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<script>
+  new BeforeAfter({
+    id: '#example1'
+  });
+  new BeforeAfter({
+    id: '#example2'
+  });
+  new BeforeAfter({
+    id: '#example3'
+  });
+  new BeforeAfter({
+    id: '#example4'
+  });
+
+  new BeforeAfter({
+    id: '#example5'
+  });
+  new BeforeAfter({
+    id: '#example6'
+  });
+  new BeforeAfter({
+    id: '#example7'
+  });
+  new BeforeAfter({
+    id: '#example8'
+  });
+
+  new BeforeAfter({
+    id: '#example9'
+  });
+  new BeforeAfter({
+    id: '#example10'
+  });
+  new BeforeAfter({
+    id: '#example11'
+  });
+  new BeforeAfter({
+    id: '#example12'
+  });
+
+  new BeforeAfter({
+    id: '#example13'
+  });
+  new BeforeAfter({
+    id: '#example14'
+  });
+  new BeforeAfter({
+    id: '#example15'
+  });
+  new BeforeAfter({
+    id: '#example16'
+  });
+
+</script>
+
+
+<section class="section">
+  <div class="container is-max-widescreen">
+
+    <div class="columns is-centered">
+      <div class="column is-full-width has-text-centered">
+        <h2 class="title is-3">Reconstruction Results</h2>
+
+        <div class="content has-text-justified">
+          <p>
+            Here we show reconstructed 3D Gaussian models on 
+            <i>room0</i> scene from synthetic Replica dataset and <i>8b5caf3398</i> scene from real ScanNet++ dataset.
+          </p>
+        </div>
+
+        <!-- Video Gallery Starts Here -->
+        <div class="container is-max-widescreen content">
+            <!-- Row 1 -->
+            <div class="columns is-centered">
+                <div class="column">
+                    <h2 class="title is-5">SplaTAM</h2>
+                    <video autoplay muted loop>
+                        <source src="./static/videos/SpalTAM_replica_room0.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="info">
+                        <p>Mapping: 0.13 fps</p>
+                        <p>Model size: 333.9MB</p>
+                        <p>Training view PSNR: 33.90</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <h2 class="title is-5">RTG-SLAM</h2>
+                    <video autoplay muted loop>
+                        <source src="./static/videos/RTG_replica_room0.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="info">
+                      <p>Mapping: 7.64 fps</p>
+                      <p>Model size: 66.1MB</p>
+                      <p>Training view PSNR: 29.01</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <h2 class="title is-5">Ours</h2>
+                    <video autoplay muted loop>
+                        <source src="./static/videos/GSFusion_replica_room0.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="info">
+                      <p>Mapping: 7.90 fps</p>
+                      <p>Model size: 58.1MB</p>
+                      <p>Training view PSNR: 33.95</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Row 2 -->
+            <div class="columns is-centered">
+                <div class="column">
+                    <video autoplay muted loop>
+                        <source src="./static/videos/SplaTAM_scannetpp_8b5caf3398.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="info">
+                      <p>Mapping: 0.17 fps</p>
+                      <p>Model size: 244.6MB</p>
+                      <p>Training view PSNR: 25.75</p>
+                      <p>Novel view PSNR: 22.76</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <video autoplay muted loop>
+                        <source src="./static/videos/RTG_scannetpp_8b5caf3398.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="info">
+                      <p>Mapping: 1.18 fps</p>
+                      <p>Model size: 118.4MB</p>
+                      <p>Training view PSNR: 18.16</p>
+                      <p>Novel view PSNR: 18.52</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <video autoplay muted loop>
+                        <source src="./static/videos/GSFusion_scannetpp_8b5caf3398.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="info">
+                      <p>Mapping: 6.66 fps</p>
+                      <p>Model size: 27.6MB</p>
+                      <p>Training view PSNR: 29.63</p>
+                      <p>Novel view PSNR: 25.35</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Video Gallery Ends Here -->
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-widescreen">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Acknowledgment</h2>
+        <div class="content has-text-justified">
+          <p>
+            This work was supported by the EU project AUTOASSESS. The authors would like to thank Simon Boche and Sebastián Barbas Laina for their assistance in collecting and processing drone data. We also extend our gratitude to Sotiris Papatheodorou for his valuable discussions and support with the Supereight2 software.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-widescreen content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>
+      @misc{wei2024gsfusiononlinergbdmapping,
+        title={GSFusion: Online RGB-D Mapping Where Gaussian Splatting Meets TSDF Fusion}, 
+        author={Jiaxin Wei and Stefan Leutenegger},
+        year={2024},
+        eprint={2408.12677},
+        archivePrefix={arXiv},
+        primaryClass={cs.CV},
+        url={https://arxiv.org/abs/2408.12677}, 
+      }
+    </code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container is-max-widescreen content">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is adapted from the <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> template and is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
