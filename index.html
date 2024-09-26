@@ -671,7 +671,7 @@
         <h2 class="title is-3">Drone Demo</h2>
         <div class="content has-text-justified">
           <p>
-            We collected real-world data using our drone mounted with a RealSense D455 camera. All poses are computed by <a href="https://arxiv.org/abs/2202.09199">OKVIS2</a>, a real-time VI-SLAM with loop closure. Despite <b>noisy depth maps</b>, our GSFusion manages to provide realistic rendering from novel viewpoints, as well as an accurate geometric map for downstream robotics tasks, e.g., navigation and path planning.
+            We collected real-world data using our drone mounted with a RealSense D455 camera.
           </p>
         </div>
         
@@ -692,22 +692,46 @@
           </div>
         </div>
         
+        <div class="content has-text-justified">
+          <p>
+            All poses are computed by <a href="https://arxiv.org/abs/2202.09199">OKVIS2</a>, a real-time VI-SLAM with loop closure.
+          </p>
+        </div>
+
+        <div class="column pt-0">
+          <figure class="image is-full-width">
+            <img src="./static/images/drone_workflow.jpg"/>
+          </figure>
+        </div>
+
+        <div class="content has-text-justified">
+          <p>
+            Despite <b>noisy depth maps</b>, our GSFusion manages to provide realistic rendering from novel viewpoints, as well as an accurate geometric map for downstream robotics tasks, e.g., navigation and path planning.
+          </p>
+        </div>
+        
         <div class="columns is-vcentered">
           <div class="column">
-            <h3 class="title is-4">Reconstructed Scene</h3>
             <figure class="image">
               <video autoplay muted loop style="height: 100%; width: auto;">
                 <source src="./static/videos/drone_gs_map.mp4" type="video/mp4">
                 Your browser does not support the video tag.
               </video>
             </figure>
+
+            <div class="info">
+              <p>Reconstructed Scene</p>
+            </div>
           </div>
 
           <div class="column">
-            <h3 class="title is-4">Extracted Mesh</h3>
             <figure class="image">
               <img src="./static/images/drone_mesh.png" style="height: 100%; width: auto;">
             </figure>
+
+            <div class="info">
+              <p>Extracted Mesh</p>
+            </div>
           </div>
         </div>
                 
